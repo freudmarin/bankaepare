@@ -2,26 +2,36 @@
 
 namespace App\Http\Controllers;
 
+use App\Degree;
 use App\Exam;
+use App\Faculty;
+use App\Notification;
 use App\Subject;
 use Illuminate\Http\Request;
 
 class ExamsController extends Controller
 {
-    public function index(Subject $subject) {
+    public function index(Subject $subject)
+    {
         $exams = $subject->exams;
         $subjects = Subject::where('degree_id', '=', $subject->degree->id)->get();
-        return view('home', compact('exams', 'subjects' ));
+        $faculties = Faculty::all();
+        $degrees = Degree::all();
+        return view('home', compact('exams', 'subjects', 'subject', 'faculties', 'degrees')); //i vendos ne vektor te gjitha,tek faqja home i akseson te gjitha tek home blade
+
     }
 
-    public function show(Exam $exam) {
+    public function show(Exam $exam)
+    {
+        $subjects = $exam->subject->degree->subjects;
         $solutions = $exam->solutions;
-        return view('exam', compact('exam', 'solutions'));
+        return view('exam', compact('exam', 'solutions', 'subjects'));
     }
 
-    public function upload(Request $request) {
+    public function upload(Request $request)
+    {
         $this->validate($request, [
-            'subject' => 'required',
+            'subject' => 'required|integer',
             'image' => 'required|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
@@ -34,14 +44,25 @@ class ExamsController extends Controller
 
         $request->image->move(public_path('images/exams'), $examImageName);
 
-        return redirect()->back()->with('success','Image Uploaded successfully.');
+        $notification = new Notification;
+        $notification->receiver_id = $exam->subject->degree->moderator()->id;
+        $notification->data = auth()->user()->name . " ngarkoi një provim në " . $exam->subject->name;
+        $notification->redirect = "/exams/" . $exam->id;
+        $notification->save();
+        return redirect("/subjects/{$exam->subject_id}")->with('success', 'Image Uploaded successfully.');
 
     }
 
-    public function destroy($id) {
-        Exam::find($id)->delete();
+    public function destroy(Exam $exam)
+    {
+        Exam::find($exam->id)->delete();
 
-        //Delete the image from the images/exams folder
-        return redirect()->back()->with('success','Image removed successfully.');
+        if (is_file($exam->id . '.jpg')) {
+            Storage::delete($exam->id . '.jpg');
+        } else {
+            return redirect("/subjects/" . $exam->subject->id)->with('error', 'Image does not exist.');
+        }
+
+        return redirect("/subjects/" . $exam->subject->id)->with('success', 'Image removed successfully.');
     }
 }

@@ -1,7 +1,5 @@
 @extends('layouts.master')
-
 @section('content')
-
     <!-- Only if a user is logged in, the upload form is shown -->
     @if (Auth::user())
 
@@ -15,13 +13,41 @@
                 <div class="alert alert-success alert-block">
                     <strong>{{ $message }}</strong>
                 </div>
+            @elseif ($message = Session::get('error'))
+                <div class="alert alert-danger alert-block">
+                    <strong>{{ $message }}</strong>
+                </div>
             @endif
 
             <div class="row">
                 <div class="form-group">
+                    <label for="faculty">Faculty</label>
+                    <select class="form-control" name="faculty">
+                        @if(isset($faculties) && $faculties->count())
+                            @foreach($faculties as $faculty)
+                                <option value="{{ $faculty->id }}">{{ $faculty->name }}</option>
+                            @endforeach
+                        @else
+                            <option value="1"> Fakulteti i Shkencave te Natyres</option>
+                        @endif
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="degree">Degree</label>
+                    <select class="form-control" name="degree">
+                        @if(isset($degrees) && $degrees->count())
+                            @foreach($degrees as $degree) // vektori dhe variabli
+                                <option value="{{ $degree->id }}">{{ $degree->name }}</option>
+                            @endforeach
+                        @else
+                            <option value="1"> Bachelor ne IMI</option>
+                        @endif
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="subject">Subject</label>
                     <select class="form-control" name="subject">
-                        @if(isset($subjects) && $subjects->count())
+                        @if(isset($subjects) && $subjects->count()) //cdo element i subjects eshte nje objekt (subject ->objekt)
                             @foreach($subjects as $subject)
                                 <option value="{{ $subject->id }}">{{ $subject->name }}</option>
                             @endforeach
@@ -37,6 +63,8 @@
                 <div class="form-group">
                     <button type="submit" class="btn btn-success">Upload</button>
                 </div>
+
+
             </div>
 
             @include ('layouts.errors')
@@ -51,23 +79,51 @@
                         <img class="img-responsive" alt="" src="/images/exams/{{ $exam->id }}.jpg" />
                     </a>
                 </div>
+            <!--    <form action="{{ url('home',$exam->id) }}" method="POST">
+
+                    <input type="hidden" name="_method" value="delete">
+
+                    {!! csrf_field() !!}
+
+                    <button type="submit" class="close-icon btn btn-danger"><i class="glyphicon glyphicon-remove"></i></button>
+
+                </form>
+                -->
             @endforeach
         </div>
+
+        </div>
     @elseif(!isset($exams))
-        <div class="row">
-            @if(isset($subjects))
-                <ul>
-                    @foreach($subjects as $subject)
-                        <li><a href="/subjects/{{ $subject->id }}">{{ $subject->name }}</a></li>
-                    @endforeach
-                </ul>
-            @elseif(isset($degrees))
-                <ul>
-                    @foreach($degrees as $degree)
-                        <li><a href="/degrees/{{ $degree->id }}">{{ $degree->name }}</a></li>
-                    @endforeach
-                </ul>
-            @elseif(isset($faculties))
+        @if(isset($subjects))
+            <ul>
+                @foreach($subjects as $subject)
+                    <li><a href="/subjects/{{ $subject->id }}">{{ $subject->name }}</a></li>
+                @endforeach
+            </ul>
+        @elseif(isset($degrees) && $degrees->count())
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">{{ $degrees[0]->faculty->name }}</h3>
+                </div>
+                <div class="box-body">
+                    <table id="example1" class="table table-bordered table-striped">
+                        <thead>
+                        <tr>
+                            <th>Degët</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($degrees as $degree)
+                            <tr>
+                                <td><a href="/degrees/{{ $degree->id }}">{{ $degree->name }}</a></td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @elseif(isset($faculties))
+            <div class="row">
                 @foreach($faculties as $faculty)
                     <div class="col-md-4">
                         <div class="box box-studimi">
@@ -78,7 +134,7 @@
                         </div>
                     </div>
                 @endforeach
-            @endif
-        </div>
+            </div>
+        @endif
     @endif
 @endsection
