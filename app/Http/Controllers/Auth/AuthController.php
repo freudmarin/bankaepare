@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Notification;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Laravel\Socialite\Facades\Socialite;
 use Exception;
@@ -63,19 +64,11 @@ class AuthController extends Controller
     }
 
     protected function sendSuccessResponse() {
-        return redirect()->home();
+        return redirect()->home()->with('msg', 'Mirësevini');
     }
 
     protected function sendFailedResponse($msg = null) {
-        return redirect()->route('login')
-            ->withErrors(['msg' => $msg ?: 'Nuk mund të futeni me këtë email.']);
-    }
-
-    public function deactivate(User $user) {
-
-        dd($user);
-        $user->update(['active' => 'false']);
-        return redirect()->back();
+        return redirect('/')->with('msg' , $msg ? $msg : 'Nuk mund të futeni me këtë email.');
     }
 
     protected function loginOrCreateAccount($providerUser) {
@@ -101,6 +94,16 @@ class AuthController extends Controller
                 'google_id' => $providerUser->getId(),
                 'access_token' => $providerUser->token
             ]);
+
+/*
+            $notification = new Notification;
+            $moderator = $user->role = 2;
+            $notification->receiver_id = $moderator -> id;
+            $notification->data = auth()->user()-> name. " sapo u regjistrua në faqe." ;
+            $notification->redirect = "/";
+            $notification->save();
+*/
+            return redirect("/")->with('success', 'Regjistrimi u krye me sukses.');
         }
 
         // login the user
